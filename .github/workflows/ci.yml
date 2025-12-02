@@ -29,32 +29,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Use SQLite for tests
-        run: echo "DATABASE_URL=sqlite:///:memory:" >> $GITHUB_ENV
-
       - name: Run unit tests
         run: pytest tests/test_unit.py
 
+      - name: Use SQLite for integration tests
+        run: echo "DATABASE_URL=sqlite:///:memory:" >> $GITHUB_ENV
+
       - name: Run integration tests
         run: pytest tests/test_integration.py
-
-  docker-push:
-    needs: tests-and-build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Docker login
-        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-      - name: Build production image
-        run: |
-          docker build \
-            --build-arg ENV_VARIABLES="${{ secrets.ENV_VARIABLES }}" \
-            -t ktzkvin/taskmanager:latest .
-
-      - name: Push to Dockerhub
-        run: docker push ktzkvin/taskmanager:latest
